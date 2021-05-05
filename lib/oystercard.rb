@@ -5,12 +5,14 @@ class Oystercard
     MIN_FARE = 1
 
     attr_reader :balance
-    attr_reader :station
+    attr_reader :entry_station
+    attr_reader :exit_station
     attr_reader :journeys
 
     def initialize
         @balance = 0
-        @station = nil
+        @entry_station = nil
+        @exit_station = nil
         @journeys = []
     end
 
@@ -21,21 +23,23 @@ class Oystercard
 
     def touch_in(station)
         fail "Your oystercard has insufficient funds" if minimum?
-        @station = station
+        @entry_station = station
     end
 
     def touch_out(station)
+        @exit_station = station
         record_journey
-        @station = nil
+        @entry_station = nil
+        @exit_station = nil
         deduct(MIN_FARE)
     end
 
     def in_journey?
-        !!station
+        !!entry_station
     end
 
     def record_journey
-        @journeys << { entry: @station, exit: station }
+        @journeys << { entry: @entry_station, exit: @exit_station }
     end
     
     private

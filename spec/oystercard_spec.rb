@@ -1,7 +1,9 @@
 require 'oystercard'
 
 describe Oystercard do
-    let(:station) {double :station}
+    let(:entry_station) {:entry_station}
+    let(:exit_station) {:exit_station}
+    #let(:journey){ {entry_station: entry_station, exit_station: exit_station} }
     
     # In order to use public transport
     # As a customer
@@ -51,7 +53,7 @@ describe Oystercard do
     # I need to touch in and out.
         it 'changes the state of the oystercard to in use when touched in' do
             subject.top_up(10)
-            subject.touch_in(station)
+            subject.touch_in(entry_station)
             expect(subject).to be_in_journey
         end
 
@@ -59,15 +61,17 @@ describe Oystercard do
     # As a customer
     # I need to have the minimum amount (£1) for a single journey.
         it 'raises an error when the balance reaches £1' do
-            expect { subject.touch_in(station) }.to raise_error("Your oystercard has insufficient funds")
+            expect { subject.touch_in(entry_station) }.to raise_error("Your oystercard has insufficient funds")
         end
 
+    # In order to pay for my journey
+    # As a customer
+    # I need to know where I've travelled from
         it 'remembers station after touch_in' do 
             subject.top_up(10)
-            subject.touch_in(station)
-            expect(subject.station).to eq station
+            subject.touch_in(entry_station)
+            expect(subject.entry_station).to eq entry_station
         end
-        
     end
 
     describe '#touch_out' do
@@ -76,32 +80,39 @@ describe Oystercard do
     # I need to touch in and out.
         it 'changes the state of the oystercard to NOT in use when touched out' do
             subject.top_up(10)
-            subject.touch_in(station)
-            subject.touch_out(station)
+            subject.touch_in(entry_station)
+            subject.touch_out(exit_station)
             expect(subject).not_to be_in_journey
         end
 
+    # In order to pay for my journey
+    # As a customer
+    # When my journey is complete, I need the correct amount deducted from my card
         it 'reduces the balance on the oystercard by MIN_FARE when the card is touch_out' do
             min_fare = Oystercard::MIN_FARE
             subject.top_up(10)
-            subject.touch_in(station)
-            expect { subject.touch_out(station) }.to change { subject.balance }.by -min_fare
+            subject.touch_in(entry_station)
+            expect { subject.touch_out(exit_station) }.to change { subject.balance }.by -min_fare
         end
 
         it 'forgets station on touch_out' do 
             subject.top_up(10)
-            subject.touch_in(station)
-            subject.touch_out(station)
-            expect(subject.station).to eq nil
+            subject.touch_in(entry_station)
+            subject.touch_out(exit_station)
+            expect(subject.entry_station).to eq nil
         end
     end
 
+    # In order to know where I have been
+    # As a customer
+    # I want to see all my previous trips
     describe '#journey_history' do
         it 'returns the history of journeys travelled after touch_out' do
             subject.top_up(10)
-            subject.touch_in(station)
-            subject.touch_out(station)
-            expect(subject.journeys).to eq([{entry: station, exit: station}])
+            subject.touch_in(entry_station)
+            subject.touch_out(exit_station)
+            p subject.journeys
+            expect(subject.journeys).to eq([{entry: entry_station, exit: exit_station}])
         end
     end
 end
